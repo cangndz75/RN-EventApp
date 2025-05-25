@@ -1,10 +1,21 @@
 import Button from "@/components/Shared/Button";
 import TextInputField from "@/components/Shared/TextInputField";
+import { cld, options } from "@/configs/CloudinaryConfig";
+import { auth } from "@/configs/FirebaseConfig";
 import Colors from "@/data/Colors";
 import AntDesign from "@expo/vector-icons/AntDesign";
+import { upload } from "cloudinary-react-native";
 import * as ImagePicker from "expo-image-picker";
+import { createUserWithEmailAndPassword } from "firebase/auth";
 import React from "react";
-import { Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import {
+    Image,
+    StyleSheet,
+    Text,
+    ToastAndroid,
+    TouchableOpacity,
+    View,
+} from "react-native";
 
 export default function SignUp() {
   const [profileImage, setProfileImage] = React.useState<string | undefined>();
@@ -27,7 +38,41 @@ export default function SignUp() {
     }
   };
 
-  const btnPress = () => {};
+  const btnPress = () => {
+    if (!fullName || !collegeEmail || !password) {
+      ToastAndroid.show("Please fill all fields", ToastAndroid.SHORT);
+      return;
+    }
+
+    createUserWithEmailAndPassword(auth, collegeEmail.trim(), password.trim())
+      .then((userCredential) => {
+
+        if (profileImage) {
+          upload(cld, {
+            file: profileImage,
+            options: options,
+            callback: (error: any, result: any) => {
+              if (error) {
+                ToastAndroid.show("Image upload failed", ToastAndroid.SHORT);
+              } else {
+                ToastAndroid.show(
+                  "Account created successfully!",
+                  ToastAndroid.SHORT
+                );
+              }
+            },
+          });
+        } else {
+          ToastAndroid.show("Account created (no image)", ToastAndroid.SHORT);
+        }
+      })
+      .catch((error) => {
+        ToastAndroid.show(
+          "Sign up failed: " + error.message,
+          ToastAndroid.LONG
+        );
+      });
+  };
   return (
     <View
       style={{
